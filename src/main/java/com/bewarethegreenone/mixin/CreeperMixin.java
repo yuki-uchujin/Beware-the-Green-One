@@ -39,19 +39,19 @@ public class CreeperMixin {
             multiplier = 1.0;
         } else {
             multiplier = Math.min(
-                    Math.pow(1.5, explosionCount + 1),
+                    Math.pow(1.5, explosionCount),
                     512.0
             );
         }
 
         System.out.println(
-                "💥 爆発半径変更: "
+                "explosion radius changed: "
                         + radius
                         + " → "
                         + radius * multiplier
                         + " ("
                         + multiplier
-                        + "倍)"
+                        + "x)"
         );
 
         return (float)(radius * multiplier);

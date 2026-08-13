@@ -14,7 +14,9 @@ public class BewareTheGreenOneConfigScreen extends Screen {
     private Button visibilityButton;
 
     public BewareTheGreenOneConfigScreen(Screen parent) {
-        super(Component.literal("Beware the Green One"));
+        super(Component.translatable(
+                "bewarethegreenone.config.title"
+        ));
         this.parent = parent;
     }
 
@@ -69,7 +71,9 @@ public class BewareTheGreenOneConfigScreen extends Screen {
         // Doneボタン
         this.addRenderableWidget(
                 Button.builder(
-                        Component.literal("Done"),
+                        Component.translatable(
+                                "bewarethegreenone.config.done"
+                        ),
                         button ->
                                 this.minecraft.setScreen(parent)
                 ).bounds(
@@ -83,36 +87,46 @@ public class BewareTheGreenOneConfigScreen extends Screen {
 
     private Component getVisibilityText() {
 
-        return Component.literal(
-                "HUD: "
-                        + (Config.hudVisible ? "ON" : "OFF")
+        return Component.translatable(
+                "bewarethegreenone.config.hud",
+                Component.translatable(
+                        Config.hudVisible
+                                ? "bewarethegreenone.config.on"
+                                : "bewarethegreenone.config.off"
+                )
         );
     }
 
     private Component getPositionText() {
 
-        String position;
+        String positionKey;
 
         switch (Config.hudPosition) {
 
             case 0 ->
-                    position = "Top Right";
+                    positionKey =
+                            "bewarethegreenone.config.position.top_right";
 
             case 1 ->
-                    position = "Top Left";
+                    positionKey =
+                            "bewarethegreenone.config.position.top_left";
 
             case 2 ->
-                    position = "Bottom Right";
+                    positionKey =
+                            "bewarethegreenone.config.position.bottom_right";
 
             case 3 ->
-                    position = "Bottom Left";
+                    positionKey =
+                            "bewarethegreenone.config.position.bottom_left";
 
             default ->
-                    position = "Top Right";
+                    positionKey =
+                            "bewarethegreenone.config.position.top_right";
         }
 
-        return Component.literal(
-                "HUD Position: " + position
+        return Component.translatable(
+                "bewarethegreenone.config.position",
+                Component.translatable(positionKey)
         );
     }
 

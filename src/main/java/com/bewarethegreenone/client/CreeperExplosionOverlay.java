@@ -4,6 +4,8 @@ import com.bewarethegreenone.Config;
 import com.bewarethegreenone.BewareTheGreenOne;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraftforge.client.event.RenderGuiEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -19,8 +21,7 @@ public class CreeperExplosionOverlay {
 
     private static int explosionCount = 0;
 
-    public static void setExplosionCount(int count)
-    {
+    public static void setExplosionCount(int count) {
         explosionCount = count;
     }
 
@@ -80,7 +81,9 @@ public class CreeperExplosionOverlay {
 
             guiGraphics.drawString(
                     minecraft.font,
-                    "?????",
+                    Component.translatable(
+                            "bewarethegreenone.overlay.unknown"
+                    ),
                     x + 10,
                     y + 10,
                     0xFFFFFF
@@ -88,7 +91,9 @@ public class CreeperExplosionOverlay {
 
             guiGraphics.drawString(
                     minecraft.font,
-                    "?????",
+                    Component.translatable(
+                            "bewarethegreenone.overlay.unknown"
+                    ),
                     x + 10,
                     y + 30,
                     0xFFFFFF
@@ -107,8 +112,10 @@ public class CreeperExplosionOverlay {
 
             int dots = (int) ((elapsed / 300) % 4);
 
-            StringBuilder text =
-                    new StringBuilder("解析中");
+            MutableComponent text =
+                    Component.translatable(
+                            "bewarethegreenone.overlay.analyzing"
+                    );
 
             for (int i = 0; i < dots; i++) {
                 text.append(".");
@@ -116,7 +123,7 @@ public class CreeperExplosionOverlay {
 
             guiGraphics.drawString(
                     minecraft.font,
-                    text.toString(),
+                    text,
                     x + 10,
                     y + 10,
                     0xFFFFFF
@@ -124,7 +131,9 @@ public class CreeperExplosionOverlay {
 
             guiGraphics.drawString(
                     minecraft.font,
-                    "Creeper Explosion detected",
+                    Component.translatable(
+                            "bewarethegreenone.overlay.detected"
+                    ),
                     x + 10,
                     y + 30,
                     0xAAAAAA
@@ -137,11 +146,9 @@ public class CreeperExplosionOverlay {
         // 通常表示
         // =========================
 
-        // 1回目だけ1.0倍
-        // 2回目以降は 1.5^爆発回数
         double multiplier;
 
-        if (explosionCount <= 1) {
+        if (explosionCount == 0) {
             multiplier = 1.0;
         } else {
             multiplier = Math.min(
@@ -152,7 +159,9 @@ public class CreeperExplosionOverlay {
 
         guiGraphics.drawString(
                 minecraft.font,
-                "Creeper Explosion",
+                Component.translatable(
+                        "bewarethegreenone.overlay.title"
+                ),
                 x + 10,
                 y + 8,
                 0xFFFFFF
@@ -160,7 +169,10 @@ public class CreeperExplosionOverlay {
 
         guiGraphics.drawString(
                 minecraft.font,
-                "Explosions: " + explosionCount,
+                Component.translatable(
+                        "bewarethegreenone.overlay.explosions",
+                        explosionCount + 1
+                ),
                 x + 10,
                 y + 26,
                 0xFFFFFF
@@ -168,9 +180,9 @@ public class CreeperExplosionOverlay {
 
         guiGraphics.drawString(
                 minecraft.font,
-                String.format(
-                        "Multiplier: %.2fx",
-                        multiplier
+                Component.translatable(
+                        "bewarethegreenone.overlay.multiplier",
+                        String.format("%.2f", multiplier)
                 ),
                 x + 10,
                 y + 44,

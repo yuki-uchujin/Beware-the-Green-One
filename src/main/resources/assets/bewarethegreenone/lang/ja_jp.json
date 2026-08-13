@@ -1,0 +1,20 @@
+{
+  "bewarethegreenone.overlay.unknown": "？？？？？",
+  "bewarethegreenone.overlay.analyzing": "解析中",
+  "bewarethegreenone.overlay.detected": "クリーパーの爆発を検知",
+  "bewarethegreenone.overlay.title": "クリーパー爆発",
+  "bewarethegreenone.overlay.explosions": "爆発回数: %s",
+  "bewarethegreenone.overlay.multiplier": "倍率: %s倍",
+  "bewarethegreenone.config.title": "Beware the Green One",
+  "bewarethegreenone.config.done": "完了",
+
+  "bewarethegreenone.config.hud": "HUD: %s",
+  "bewarethegreenone.config.on": "オン",
+  "bewarethegreenone.config.off": "オフ",
+
+  "bewarethegreenone.config.position": "HUD位置: %s",
+  "bewarethegreenone.config.position.top_right": "右上",
+  "bewarethegreenone.config.position.top_left": "左上",
+  "bewarethegreenone.config.position.bottom_right": "右下",
+  "bewarethegreenone.config.position.bottom_left": "左下"
+}

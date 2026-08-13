@@ -1,0 +1,20 @@
+{
+  "bewarethegreenone.overlay.unknown": "?????",
+  "bewarethegreenone.overlay.analyzing": "Analyzing",
+  "bewarethegreenone.overlay.detected": "Creeper Explosion detected",
+  "bewarethegreenone.overlay.title": "Creeper Explosion",
+  "bewarethegreenone.overlay.explosions": "Explosions: %s",
+  "bewarethegreenone.overlay.multiplier": "Multiplier: %sx",
+  "bewarethegreenone.config.title": "Beware the Green One",
+  "bewarethegreenone.config.done": "Done",
+
+  "bewarethegreenone.config.hud": "HUD: %s",
+  "bewarethegreenone.config.on": "ON",
+  "bewarethegreenone.config.off": "OFF",
+
+  "bewarethegreenone.config.position": "HUD Position: %s",
+  "bewarethegreenone.config.position.top_right": "Top Right",
+  "bewarethegreenone.config.position.top_left": "Top Left",
+  "bewarethegreenone.config.position.bottom_right": "Bottom Right",
+  "bewarethegreenone.config.position.bottom_left": "Bottom Left"
+}

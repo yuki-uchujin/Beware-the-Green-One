@@ -80,12 +80,12 @@ public class BewareTheGreenOne {
 
         // 今回の爆発が何回目か
         int explosionCount =
-                data.getExplosionCount() + 1;
+                data.getExplosionCount();
 
         // 今回の爆発倍率
         double multiplier;
 
-        if (explosionCount == 1) {
+        if (explosionCount == 0) {
             multiplier = 1.0;
         } else {
             multiplier = Math.min(
@@ -95,29 +95,28 @@ public class BewareTheGreenOne {
         }
 
         LOGGER.info(
-                "クリーパーの爆発を検知しました！"
+                "Creeper explosion detected!"
         );
 
         LOGGER.info(
-                "爆発回数: {}",
-                explosionCount
+                "Explosion count: {}",
+                explosionCount + 1
         );
 
         LOGGER.info(
-                "今回の倍率: {}倍",
+                "Current multiplier: {}x",
                 multiplier
         );
 
         // 爆発回数を保存
         data.incrementExplosionCount();
 
-        // 最新の状態をクライアントへ同期
         NetworkHandler.CHANNEL.send(
                 PacketDistributor.ALL.noArg(),
                 new ExplosionCountPacket(
                         explosionCount,
                         true,
-                        explosionCount == 1
+                        explosionCount == 0
                 )
         );
     }
