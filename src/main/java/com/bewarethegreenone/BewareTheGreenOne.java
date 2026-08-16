@@ -15,6 +15,14 @@ import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.network.PacketDistributor;
 import org.slf4j.Logger;
+import java.util.ArrayList;
+import java.util.List;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.entity.Entity;
+import net.minecraftforge.event.level.ExplosionEvent;
+import net.minecraftforge.event.TickEvent;
+
 
 @Mod(BewareTheGreenOne.MODID)
 public class BewareTheGreenOne {
@@ -25,6 +33,9 @@ public class BewareTheGreenOne {
 
     public static boolean hasExploded = false;
     public static long analysisStartTime = 0;
+
+    private static final List<EnchantedExplosion> activeExplosions =
+            new ArrayList<>();
 
     public BewareTheGreenOne(FMLJavaModLoadingContext context) {
 
@@ -125,6 +136,127 @@ public class BewareTheGreenOne {
                         newExplosionCount == 1
                 )
         );
+    }
+
+    @SubscribeEvent
+    public void onExplosionStart(ExplosionEvent.Start event) {
+
+        Entity source =
+                event.getExplosion().getDirectSourceEntity();
+
+        LOGGER.info(
+                "ExplosionEvent.Start fired! source={}",
+                source
+        );
+
+        // クリーパー以外は通常の爆発
+        if (!(source instanceof Creeper)) {
+            return;
+        }
+
+        MinecraftServer server =
+                source.level().getServer();
+
+        if (server == null) {
+            return;
+        }
+
+        CreeperExplosionData data =
+                CreeperExplosionData.get(server);
+
+        // =========================
+        // 今回の爆発回数
+        // =========================
+
+        // 0 = 1回目
+        // 1 = 2回目
+        // 2 = 3回目
+        int explosionCount =
+                data.getExplosionCount();
+
+        // =========================
+        // 今回の倍率を計算
+        // =========================
+
+        double multiplier =
+                Math.min(
+                        Math.pow(1.5, explosionCount),
+                        Config.maxExplosionMultiplier
+                );
+
+        // =========================
+        // 爆発回数を増加
+        // =========================
+
+        data.incrementExplosionCount();
+
+        int newExplosionCount =
+                data.getExplosionCount();
+
+        // =========================
+        // クライアントへ同期
+        // =========================
+
+        NetworkHandler.CHANNEL.send(
+                PacketDistributor.ALL.noArg(),
+                new ExplosionCountPacket(
+                        newExplosionCount,
+                        true,
+                        newExplosionCount == 1
+                )
+        );
+
+        // =========================
+        // 爆発範囲
+        // =========================
+
+        // バニラクリーパーの爆発半径 3.0 × 倍率
+        double radius = 3.0 * multiplier;
+
+        LOGGER.info(
+                "Starting Enchanted explosion! multiplier={}x, radius={}",
+                multiplier,
+                radius
+        );
+
+        // =========================
+        // バニラ爆発をキャンセル
+        // =========================
+
+        event.setCanceled(true);
+
+        // =========================
+        // EnchantedExplosion開始
+        // =========================
+
+        ServerLevel level =
+                (ServerLevel) source.level();
+
+        EnchantedExplosion explosion =
+                new EnchantedExplosion(
+                        level,
+                        event.getExplosion().getPosition(),
+                        radius
+                );
+
+        explosion.start();
+
+        activeExplosions.add(explosion);
+    }
+
+    @SubscribeEvent
+    public void onServerTick(TickEvent.ServerTickEvent event) {
+
+        if (event.phase != TickEvent.Phase.END) {
+            return;
+        }
+
+        activeExplosions.removeIf(explosion -> {
+
+            explosion.tick();
+
+            return explosion.isFinished();
+        });
     }
 
     /**
