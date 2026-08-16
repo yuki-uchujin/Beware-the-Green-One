@@ -9,7 +9,6 @@ import net.minecraft.world.entity.monster.Creeper;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.ExplosionEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
@@ -29,7 +28,6 @@ public class BewareTheGreenOne {
 
     public BewareTheGreenOne(FMLJavaModLoadingContext context) {
 
-        IEventBus modEventBus = context.getModEventBus();
 
         // ネットワーク登録
         NetworkHandler.register();
@@ -94,16 +92,16 @@ public class BewareTheGreenOne {
             );
         }
 
-        LOGGER.info(
+        LOGGER.debug(
                 "Creeper explosion detected!"
         );
 
-        LOGGER.info(
+        LOGGER.debug(
                 "Explosion count: {}",
                 explosionCount + 1
         );
 
-        LOGGER.info(
+        LOGGER.debug(
                 "Current multiplier: {}x",
                 multiplier
         );

@@ -1,14 +1,19 @@
 package com.bewarethegreenone.mixin;
 
 import com.bewarethegreenone.CreeperExplosionData;
+import com.mojang.logging.LogUtils;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.entity.monster.Creeper;
+import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
 @Mixin(Creeper.class)
+
 public class CreeperMixin {
+
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     @ModifyArg(
             method = "explodeCreeper",
@@ -44,14 +49,11 @@ public class CreeperMixin {
             );
         }
 
-        System.out.println(
-                "explosion radius changed: "
-                        + radius
-                        + " → "
-                        + radius * multiplier
-                        + " ("
-                        + multiplier
-                        + "x)"
+        LOGGER.debug(
+                "Explosion radius changed: {} -> {} ({}x)",
+                radius,
+                radius * multiplier,
+                multiplier
         );
 
         return (float)(radius * multiplier);
