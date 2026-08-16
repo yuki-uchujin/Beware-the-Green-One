@@ -14,6 +14,7 @@ public class Config {
     private static final ForgeConfigSpec.Builder BUILDER =
             new ForgeConfigSpec.Builder();
 
+
     // =========================
     // HUD Settings
     // =========================
@@ -42,7 +43,32 @@ public class Config {
                             true
                     );
 
-    static final ForgeConfigSpec SPEC = BUILDER.build();
+
+    // =========================
+    // Explosion Settings
+    // =========================
+
+    private static final ForgeConfigSpec.DoubleValue MAX_EXPLOSION_MULTIPLIER =
+            BUILDER
+                    .comment(
+                            "Maximum explosion multiplier",
+                            "The explosion multiplier follows 1.5^n and will not exceed this value."
+                    )
+                    .defineInRange(
+                            "maxExplosionMultiplier",
+                            512.0,
+                            1.0,
+                            Double.MAX_VALUE
+                    );
+
+
+    // =========================
+    // Config Spec
+    // =========================
+
+    static final ForgeConfigSpec SPEC =
+            BUILDER.build();
+
 
     // =========================
     // Current Settings
@@ -50,6 +76,8 @@ public class Config {
 
     public static int hudPosition = 0;
     public static boolean hudVisible = true;
+    public static double maxExplosionMultiplier = 512.0;
+
 
     // =========================
     // Load Config
@@ -60,7 +88,9 @@ public class Config {
 
         hudPosition = HUD_POSITION.get();
         hudVisible = HUD_VISIBLE.get();
+        maxExplosionMultiplier = MAX_EXPLOSION_MULTIPLIER.get();
     }
+
 
     // =========================
     // HUD Position
@@ -72,6 +102,7 @@ public class Config {
         hudPosition = position;
     }
 
+
     // =========================
     // HUD Visibility
     // =========================
@@ -80,5 +111,16 @@ public class Config {
 
         HUD_VISIBLE.set(visible);
         hudVisible = visible;
+    }
+
+
+    // =========================
+    // Maximum Explosion Multiplier
+    // =========================
+
+    public static void setMaxExplosionMultiplier(double multiplier) {
+
+        MAX_EXPLOSION_MULTIPLIER.set(multiplier);
+        maxExplosionMultiplier = multiplier;
     }
 }

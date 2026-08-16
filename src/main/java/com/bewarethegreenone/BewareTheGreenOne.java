@@ -28,7 +28,6 @@ public class BewareTheGreenOne {
 
     public BewareTheGreenOne(FMLJavaModLoadingContext context) {
 
-
         // ネットワーク登録
         NetworkHandler.register();
 
@@ -77,10 +76,14 @@ public class BewareTheGreenOne {
                 CreeperExplosionData.get(server);
 
         // 今回の爆発が何回目か
+        // ※爆発前の値なので、1回目なら0
         int explosionCount =
                 data.getExplosionCount();
 
         // 今回の爆発倍率
+        // 1回目: 1.0倍
+        // 2回目: 1.5倍
+        // 3回目: 2.25倍
         double multiplier;
 
         if (explosionCount == 0) {
@@ -88,7 +91,7 @@ public class BewareTheGreenOne {
         } else {
             multiplier = Math.min(
                     Math.pow(1.5, explosionCount),
-                    512.0
+                    Config.maxExplosionMultiplier
             );
         }
 
@@ -109,17 +112,20 @@ public class BewareTheGreenOne {
         // 爆発回数を保存
         data.incrementExplosionCount();
 
+        // 増加後の累計爆発回数を取得
+        int newExplosionCount =
+                data.getExplosionCount();
+
+        // クライアントへ現在の爆発回数を同期
         NetworkHandler.CHANNEL.send(
                 PacketDistributor.ALL.noArg(),
                 new ExplosionCountPacket(
-                        explosionCount,
+                        newExplosionCount,
                         true,
-                        explosionCount == 0
+                        newExplosionCount == 1
                 )
         );
     }
-
-
 
     /**
      * プレイヤーがサーバーへログインしたとき、

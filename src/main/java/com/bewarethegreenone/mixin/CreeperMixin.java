@@ -1,5 +1,6 @@
 package com.bewarethegreenone.mixin;
 
+import com.bewarethegreenone.Config;
 import com.bewarethegreenone.CreeperExplosionData;
 import com.mojang.logging.LogUtils;
 import net.minecraft.server.MinecraftServer;
@@ -45,7 +46,7 @@ public class CreeperMixin {
         } else {
             multiplier = Math.min(
                     Math.pow(1.5, explosionCount),
-                    512.0
+                    Config.maxExplosionMultiplier
             );
         }
 

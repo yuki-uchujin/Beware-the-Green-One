@@ -16,5 +16,6 @@
   "bewarethegreenone.config.position.top_right": "Top Right",
   "bewarethegreenone.config.position.top_left": "Top Left",
   "bewarethegreenone.config.position.bottom_right": "Bottom Right",
-  "bewarethegreenone.config.position.bottom_left": "Bottom Left"
+  "bewarethegreenone.config.position.bottom_left": "Bottom Left",
+  "bewarethegreenone.config.max_multiplier": "Max Explosion Multiplier"
 }

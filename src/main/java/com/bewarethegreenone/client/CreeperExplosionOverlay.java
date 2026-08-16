@@ -148,12 +148,12 @@ public class CreeperExplosionOverlay {
 
         double multiplier;
 
-        if (explosionCount == 0) {
+        if (explosionCount <= 1) {
             multiplier = 1.0;
         } else {
             multiplier = Math.min(
-                    Math.pow(1.5, explosionCount),
-                    512.0
+                    Math.pow(1.5, explosionCount - 1),
+                    Config.maxExplosionMultiplier
             );
         }
 
@@ -171,7 +171,7 @@ public class CreeperExplosionOverlay {
                 minecraft.font,
                 Component.translatable(
                         "bewarethegreenone.overlay.explosions",
-                        explosionCount + 1
+                        explosionCount
                 ),
                 x + 10,
                 y + 26,
