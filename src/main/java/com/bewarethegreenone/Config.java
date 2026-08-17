@@ -37,7 +37,9 @@ public class Config {
 
     private static final ForgeConfigSpec.BooleanValue HUD_VISIBLE =
             BUILDER
-                    .comment("Whether to display the Creeper Explosion HUD")
+                    .comment(
+                            "Whether to display the Creeper Explosion HUD"
+                    )
                     .define(
                             "hudVisible",
                             true
@@ -48,11 +50,25 @@ public class Config {
     // Explosion Settings
     // =========================
 
+    private static final ForgeConfigSpec.IntValue EXPLOSION_MODE =
+            BUILDER
+                    .comment(
+                            "Explosion calculation mode",
+                            "0 = Vanilla style (1.5^n)",
+                            "1 = Enchanted style (1.3^n)"
+                    )
+                    .defineInRange(
+                            "explosionMode",
+                            0,
+                            0,
+                            1
+                    );
+
+
     private static final ForgeConfigSpec.DoubleValue MAX_EXPLOSION_MULTIPLIER =
             BUILDER
                     .comment(
-                            "Maximum explosion multiplier",
-                            "The explosion multiplier follows 1.5^n and will not exceed this value."
+                            "Maximum explosion multiplier"
                     )
                     .defineInRange(
                             "maxExplosionMultiplier",
@@ -76,6 +92,11 @@ public class Config {
 
     public static int hudPosition = 0;
     public static boolean hudVisible = true;
+
+    // 0 = Vanilla
+    // 1 = Enchanted
+    public static int explosionMode = 0;
+
     public static double maxExplosionMultiplier = 512.0;
 
 
@@ -86,9 +107,17 @@ public class Config {
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event) {
 
-        hudPosition = HUD_POSITION.get();
-        hudVisible = HUD_VISIBLE.get();
-        maxExplosionMultiplier = MAX_EXPLOSION_MULTIPLIER.get();
+        hudPosition =
+                HUD_POSITION.get();
+
+        hudVisible =
+                HUD_VISIBLE.get();
+
+        explosionMode =
+                EXPLOSION_MODE.get();
+
+        maxExplosionMultiplier =
+                MAX_EXPLOSION_MULTIPLIER.get();
     }
 
 
@@ -115,10 +144,23 @@ public class Config {
 
 
     // =========================
+    // Explosion Mode
+    // =========================
+
+    public static void setExplosionMode(int mode) {
+
+        EXPLOSION_MODE.set(mode);
+        explosionMode = mode;
+    }
+
+
+    // =========================
     // Maximum Explosion Multiplier
     // =========================
 
-    public static void setMaxExplosionMultiplier(double multiplier) {
+    public static void setMaxExplosionMultiplier(
+            double multiplier
+    ) {
 
         MAX_EXPLOSION_MULTIPLIER.set(multiplier);
         maxExplosionMultiplier = multiplier;

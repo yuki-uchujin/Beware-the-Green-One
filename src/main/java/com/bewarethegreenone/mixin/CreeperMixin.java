@@ -1,6 +1,6 @@
 package com.bewarethegreenone.mixin;
 
-import com.bewarethegreenone.Config;
+import com.bewarethegreenone.BewareTheGreenOne;
 import com.bewarethegreenone.CreeperExplosionData;
 import com.mojang.logging.LogUtils;
 import net.minecraft.server.MinecraftServer;
@@ -11,10 +11,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
 @Mixin(Creeper.class)
-
 public class CreeperMixin {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER =
+            LogUtils.getLogger();
 
     @ModifyArg(
             method = "explodeCreeper",
@@ -26,9 +26,20 @@ public class CreeperMixin {
     )
     private float modifyExplosionRadius(float radius) {
 
-        Creeper creeper = (Creeper)(Object)this;
+        Creeper creeper =
+                (Creeper) (Object) this;
 
-        MinecraftServer server = creeper.getServer();
+        /*
+         * Enchanted Modeでは
+         * バニラ爆発そのものをキャンセルするので、
+         * Mixinは何もしない。
+         */
+        if (com.bewarethegreenone.Config.explosionMode != 0) {
+            return radius;
+        }
+
+        MinecraftServer server =
+                creeper.getServer();
 
         if (server == null) {
             return radius;
@@ -37,26 +48,32 @@ public class CreeperMixin {
         CreeperExplosionData data =
                 CreeperExplosionData.get(server);
 
-        int explosionCount = data.getExplosionCount();
+        int explosionCount =
+                data.getExplosionCount();
 
-        double multiplier;
+        /*
+         * 爆発倍率は
+         * BewareTheGreenOne側の共通メソッドを使用。
+         *
+         * 0 = 1回目 → 1.0x
+         * 1 = 2回目 → 1.5x
+         * 2 = 3回目 → 2.25x
+         */
+        double multiplier =
+                BewareTheGreenOne.getExplosionMultiplier(
+                        explosionCount
+                );
 
-        if (explosionCount == 0) {
-            multiplier = 1.0;
-        } else {
-            multiplier = Math.min(
-                    Math.pow(1.5, explosionCount),
-                    Config.maxExplosionMultiplier
-            );
-        }
+        double newRadius =
+                radius * multiplier;
 
         LOGGER.debug(
                 "Explosion radius changed: {} -> {} ({}x)",
                 radius,
-                radius * multiplier,
+                newRadius,
                 multiplier
         );
 
-        return (float)(radius * multiplier);
+        return (float) newRadius;
     }
 }

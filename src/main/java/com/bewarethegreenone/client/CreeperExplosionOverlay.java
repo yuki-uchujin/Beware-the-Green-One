@@ -10,6 +10,7 @@ import net.minecraftforge.client.event.RenderGuiEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
+
 @Mod.EventBusSubscriber(
         modid = BewareTheGreenOne.MODID,
         value = net.minecraftforge.api.distmarker.Dist.CLIENT
@@ -21,14 +22,17 @@ public class CreeperExplosionOverlay {
 
     private static int explosionCount = 0;
 
+
     public static void setExplosionCount(int count) {
         explosionCount = count;
     }
 
+
     @SubscribeEvent
     public static void onRenderGui(RenderGuiEvent.Post event) {
 
-        Minecraft minecraft = Minecraft.getInstance();
+        Minecraft minecraft =
+                Minecraft.getInstance();
 
         if (minecraft.player == null) {
             return;
@@ -38,36 +42,40 @@ public class CreeperExplosionOverlay {
             return;
         }
 
-        GuiGraphics guiGraphics = event.getGuiGraphics();
+        GuiGraphics guiGraphics =
+                event.getGuiGraphics();
 
-        int screenWidth = guiGraphics.guiWidth();
-        int screenHeight = guiGraphics.guiHeight();
+        int screenWidth =
+                guiGraphics.guiWidth();
+
+        int screenHeight =
+                guiGraphics.guiHeight();
 
         int x;
         int y;
 
         if (Config.hudPosition == 0) {
-            // 右上
+
             x = screenWidth - WIDTH - 10;
             y = 10;
 
         } else if (Config.hudPosition == 1) {
-            // 左上
+
             x = 10;
             y = 10;
 
         } else if (Config.hudPosition == 2) {
-            // 右下
+
             x = screenWidth - WIDTH - 10;
             y = screenHeight - HEIGHT - 10;
 
         } else {
-            // 左下
+
             x = 10;
             y = screenHeight - HEIGHT - 10;
         }
 
-        // 黒い半透明背景
+
         guiGraphics.fill(
                 x,
                 y,
@@ -76,7 +84,7 @@ public class CreeperExplosionOverlay {
                 0x66000000
         );
 
-        // まだクリーパーが爆発していない
+
         if (!BewareTheGreenOne.hasExploded) {
 
             guiGraphics.drawString(
@@ -102,15 +110,16 @@ public class CreeperExplosionOverlay {
             return;
         }
 
-        // 初回爆発からの経過時間
+
         long elapsed =
                 System.currentTimeMillis()
                         - BewareTheGreenOne.analysisStartTime;
 
-        // 解析中
+
         if (elapsed < 1500) {
 
-            int dots = (int) ((elapsed / 300) % 4);
+            int dots =
+                    (int) ((elapsed / 300) % 4);
 
             MutableComponent text =
                     Component.translatable(
@@ -142,20 +151,21 @@ public class CreeperExplosionOverlay {
             return;
         }
 
-        // =========================
-        // 通常表示
-        // =========================
 
-        double multiplier;
+        /*
+         * ★ここも倍率計算を直接しない。
+         *
+         * explosionCount は
+         * 「爆発した回数」なので、
+         * 1回目 → 1.0倍
+         * 2回目 → 1.3倍 / 1.5倍
+         * 3回目 → 1.3²倍 / 1.5²倍
+         */
+        double multiplier =
+                BewareTheGreenOne.getExplosionMultiplier(
+                        Math.max(explosionCount - 1, 0)
+                );
 
-        if (explosionCount <= 1) {
-            multiplier = 1.0;
-        } else {
-            multiplier = Math.min(
-                    Math.pow(1.5, explosionCount - 1),
-                    Config.maxExplosionMultiplier
-            );
-        }
 
         guiGraphics.drawString(
                 minecraft.font,
