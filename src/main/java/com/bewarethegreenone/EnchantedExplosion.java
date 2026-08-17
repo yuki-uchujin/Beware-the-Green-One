@@ -177,7 +177,7 @@ public class EnchantedExplosion {
                 powerRatio * powerRatio;
 
         double destructionChance =
-                powerSquared / (1.0 + powerSquared);
+                powerSquared / (0.5 + powerSquared);
 
         if (random.nextDouble() >= destructionChance) {
             return;
