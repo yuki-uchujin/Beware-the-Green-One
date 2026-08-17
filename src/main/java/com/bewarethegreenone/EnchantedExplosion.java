@@ -61,45 +61,15 @@ public class EnchantedExplosion {
                 "EnchantedExplosion: radius=" + radius
         );
 
-        int minX = (int) Math.floor(center.x - radius);
-        int maxX = (int) Math.ceil(center.x + radius);
+        // 爆発中心に最も近い6方向のブロックから探索開始
+        BlockPos centerPos = BlockPos.containing(center);
 
-        int minY = (int) Math.floor(center.y - radius);
-        int maxY = (int) Math.ceil(center.y + radius);
-
-        int minZ = (int) Math.floor(center.z - radius);
-        int maxZ = (int) Math.ceil(center.z + radius);
-
-        // 球の外周を1ブロック間隔で探索
-        for (int x = minX; x <= maxX; x++) {
-            for (int y = minY; y <= maxY; y++) {
-                for (int z = minZ; z <= maxZ; z++) {
-
-                    double dx = x + 0.5 - center.x;
-                    double dy = y + 0.5 - center.y;
-                    double dz = z + 0.5 - center.z;
-
-                    double distanceSquared =
-                            dx * dx + dy * dy + dz * dz;
-
-                    // 球の外側
-                    if (distanceSquared > radius * radius) {
-                        continue;
-                    }
-
-                    // 球の表面付近だけを初期探索点にする
-                    double innerRadius = Math.max(radius - 1.0, 0.0);
-
-                    if (distanceSquared < innerRadius * innerRadius) {
-                        continue;
-                    }
-
-                    BlockPos pos = new BlockPos(x, y, z);
-
-                    addToQueue(pos);
-                }
-            }
-        }
+        addToQueue(centerPos.above());
+        addToQueue(centerPos.below());
+        addToQueue(centerPos.north());
+        addToQueue(centerPos.south());
+        addToQueue(centerPos.east());
+        addToQueue(centerPos.west());
     }
 
     private void addToQueue(BlockPos pos) {
@@ -182,10 +152,10 @@ public class EnchantedExplosion {
                         null
                 );
 
-        final double BEDROCK_RESISTANCE = 3_600_000.0;
+        // 岩盤などの破壊不能ブロック
+        final float UNBREAKABLE_RESISTANCE = 3_600_000.0F;
 
-        // 破壊不能ブロックは壁
-        if (resistance >= BEDROCK_RESISTANCE) {
+        if (resistance >= UNBREAKABLE_RESISTANCE) {
 
             LOGGER.info(
                     "Explosion blocked by {} at {}",
@@ -196,21 +166,98 @@ public class EnchantedExplosion {
             return;
         }
 
-        double destructionChance =
-                1.0 - (resistance / BEDROCK_RESISTANCE);
+        /*
+         * 現在のクリーパー倍率
+         *
+         * ここはEnchantedExplosionのコンストラクタで
+         * multiplierを渡すようにするのが理想。
+         *
+         * ひとまず radius / 3.0 から求められる。
+         */
+        double currentMultiplier = radius / 3.0;
 
-        // 破壊失敗 → その先へ進まない
+        /*
+         * ブロックごとの「必要倍率指数」
+         *
+         * 1.5^2 = 2.25
+         * 1.5^5 = 7.59375
+         * 1.5^7 = 17.0859375
+         */
+
+        double requiredExponent;
+
+        if (state.is(net.minecraft.world.level.block.Blocks.OBSIDIAN)) {
+
+            // 黒曜石
+            requiredExponent = 7.0;
+
+        } else if (state.is(net.minecraft.world.level.block.Blocks.IRON_BLOCK)) {
+
+            // 鉄ブロック
+            requiredExponent = 5.0;
+
+        } else if (state.is(net.minecraft.world.level.block.Blocks.STONE)) {
+
+            // 石
+            requiredExponent = 2.0;
+
+        } else {
+
+            /*
+             * その他のブロックは爆破耐性から
+             * 必要指数をざっくり計算する。
+             */
+            requiredExponent =
+                    Math.max(
+                            1.0,
+                            Math.log1p(resistance) / Math.log(2.0)
+                    );
+        }
+
+        double requiredMultiplier =
+                Math.pow(1.5, requiredExponent);
+
+        /*
+         * 必要倍率に対して現在の倍率が
+         * どのくらい達しているか。
+         */
+        double powerRatio =
+                currentMultiplier / requiredMultiplier;
+
+        /*
+         * まだ全然足りない場合は破壊しない。
+         *
+         * さらに、その先にも進ませない。
+         */
+        if (powerRatio < 0.5) {
+            return;
+        }
+
+        /*
+         * 必要倍率に近づくほど破壊確率が上がる。
+         *
+         * 0.5倍 → 0%
+         * 1.0倍 → 100%
+         *
+         * その間を滑らかに補間する。
+         */
+        double destructionChance =
+                Math.min(
+                        1.0,
+                        (powerRatio - 0.5) / 0.5
+                );
+
         if (random.nextDouble() >= destructionChance) {
             return;
         }
 
-        // 破壊
+        // ブロック破壊
         level.destroyBlock(
                 pos,
-                true
+                false
         );
 
-        // 6方向へ探索
+        // 破壊できた場合だけ、その先へ進む
         addToQueue(pos.above());
         addToQueue(pos.below());
         addToQueue(pos.north());
