@@ -32,6 +32,22 @@ public class BewareTheGreenOne {
     public static boolean hasExploded = false;
     public static long analysisStartTime = 0;
 
+    /*
+     * ========================================
+     * Debug Benchmark
+     * ========================================
+     *
+     * true の場合、
+     * 10回目・15回目・20回目の爆発だけ
+     * EnchantedExplosion を実行する。
+     *
+     * それ以外の爆発は完全にキャンセルする。
+     *
+     * 通常プレイ時は false にする。
+     */
+    private static final boolean DEBUG_BENCHMARK = true;
+
+
     private static final List<EnchantedExplosion> activeExplosions =
             new ArrayList<>();
 
@@ -77,7 +93,7 @@ public class BewareTheGreenOne {
 
         /*
          * 0 = Vanilla → 1.5^n
-         * 1 = Enchanted → 1.3^n
+         * 1 = Enchanted → 1.2^n
          */
         if (Config.explosionMode == 0) {
             base = 1.5;
@@ -89,6 +105,27 @@ public class BewareTheGreenOne {
                 Math.pow(base, explosionCount),
                 Config.maxExplosionMultiplier
         );
+    }
+
+
+    /**
+     * 指定した爆発回数が
+     * ベンチマーク対象かどうか。
+     *
+     * explosionCount は
+     * 0始まりなので、
+     *
+     * 9  = 10回目
+     * 14 = 15回目
+     * 19 = 20回目
+     */
+    private boolean isBenchmarkExplosion(
+            int explosionCount
+    ) {
+
+        return explosionCount == 9
+                || explosionCount == 14
+                || explosionCount == 19;
     }
 
 
@@ -134,24 +171,129 @@ public class BewareTheGreenOne {
         int explosionCount =
                 data.getExplosionCount();
 
+
         /*
          * ========================================
-         * Vanilla Mode
+         * Debug Benchmark Mode
          * ========================================
          *
-         * Mixin側に処理を任せる。
+         * 10 / 15 / 20回目だけ
+         * EnchantedExplosionを実行。
          *
-         * ここでは爆発をキャンセルしない。
+         * それ以外はバニラ爆発も
+         * EnchantedExplosionも実行しない。
          */
+        if (DEBUG_BENCHMARK) {
+
+            /*
+             * 爆発回数は必ず進める。
+             */
+            data.incrementExplosionCount();
+
+            int newExplosionCount =
+                    data.getExplosionCount();
+
+            /*
+             * HUDも同期。
+             */
+            NetworkHandler.CHANNEL.send(
+                    PacketDistributor.ALL.noArg(),
+                    new ExplosionCountPacket(
+                            newExplosionCount,
+                            true,
+                            newExplosionCount == 1
+                    )
+            );
+
+
+            /*
+             * 10 / 15 / 20回目以外は
+             * 完全に爆発をキャンセル。
+             */
+            if (!isBenchmarkExplosion(
+                    explosionCount
+            )) {
+
+                event.setCanceled(true);
+
+                LOGGER.info(
+                        "Debug benchmark: skipping explosion #{}",
+                        newExplosionCount
+                );
+
+                return;
+            }
+
+
+            /*
+             * =========================
+             * ベンチマーク対象
+             * =========================
+             */
+
+            double multiplier =
+                    getExplosionMultiplier(
+                            explosionCount
+                    );
+
+            LOGGER.info(
+                    "Debug benchmark: Enchanted explosion #{} multiplier={}x",
+                    newExplosionCount,
+                    multiplier
+            );
+
+
+            double radius =
+                    3.0 * multiplier;
+
+            LOGGER.info(
+                    "Starting benchmark explosion: " +
+                            "count={}, multiplier={}x, radius={}",
+                    newExplosionCount,
+                    multiplier,
+                    radius
+            );
+
+
+            /*
+             * バニラ爆発をキャンセル。
+             */
+            event.setCanceled(true);
+
+
+            ServerLevel level =
+                    (ServerLevel) source.level();
+
+
+            EnchantedExplosion explosion =
+                    new EnchantedExplosion(
+                            level,
+                            event.getExplosion().getPosition(),
+                            radius,
+                            multiplier,
+                            newExplosionCount
+                    );
+
+            explosion.start();
+
+            activeExplosions.add(explosion);
+
+            return;
+        }
+
+
+        /*
+         * ========================================
+         * 通常の Vanilla Mode
+         * ========================================
+         */
+
         if (Config.explosionMode == 0) {
 
             LOGGER.info(
                     "Vanilla explosion mode"
             );
 
-            /*
-             * 爆発倍率はMixinと同じ計算になる。
-             */
             double multiplier =
                     getExplosionMultiplier(
                             explosionCount
@@ -163,17 +305,11 @@ public class BewareTheGreenOne {
                     multiplier
             );
 
-            /*
-             * 爆発回数を増やす。
-             */
             data.incrementExplosionCount();
 
             int newExplosionCount =
                     data.getExplosionCount();
 
-            /*
-             * HUDへ同期
-             */
             NetworkHandler.CHANNEL.send(
                     PacketDistributor.ALL.noArg(),
                     new ExplosionCountPacket(
@@ -184,9 +320,7 @@ public class BewareTheGreenOne {
             );
 
             /*
-             * ここではevent.setCanceled(true)しない！
-             *
-             * Minecraft本来の爆発処理へ進む。
+             * バニラ爆発へ。
              */
             return;
         }
@@ -194,7 +328,7 @@ public class BewareTheGreenOne {
 
         /*
          * ========================================
-         * Enchanted Mode
+         * 通常の Enchanted Mode
          * ========================================
          */
 
@@ -209,17 +343,11 @@ public class BewareTheGreenOne {
                 multiplier
         );
 
-        /*
-         * 爆発回数を増やす。
-         */
         data.incrementExplosionCount();
 
         int newExplosionCount =
                 data.getExplosionCount();
 
-        /*
-         * HUDへ同期
-         */
         NetworkHandler.CHANNEL.send(
                 PacketDistributor.ALL.noArg(),
                 new ExplosionCountPacket(
@@ -229,9 +357,7 @@ public class BewareTheGreenOne {
                 )
         );
 
-        /*
-         * バニラクリーパーの爆発半径
-         */
+
         double radius =
                 3.0 * multiplier;
 
@@ -241,16 +367,13 @@ public class BewareTheGreenOne {
                 radius
         );
 
-        /*
-         * バニラ爆発をキャンセル
-         */
+
         event.setCanceled(true);
 
-        /*
-         * 独自爆発開始
-         */
+
         ServerLevel level =
                 (ServerLevel) source.level();
+
 
         EnchantedExplosion explosion =
                 new EnchantedExplosion(
