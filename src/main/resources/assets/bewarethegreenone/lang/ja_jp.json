@@ -17,5 +17,8 @@
   "bewarethegreenone.config.position.top_left": "左上",
   "bewarethegreenone.config.position.bottom_right": "右下",
   "bewarethegreenone.config.position.bottom_left": "左下",
-  "bewarethegreenone.config.max_multiplier": "最大爆発倍率"
+  "bewarethegreenone.config.max_multiplier": "最大爆発倍率",
+  "bewarethegreenone.config.explosion_mode": "爆発モード: %s",
+  "bewarethegreenone.config.explosion_mode.vanilla": "バニラ",
+  "bewarethegreenone.config.explosion_mode.enchanted": "拡張"
 }

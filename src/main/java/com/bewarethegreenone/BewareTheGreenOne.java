@@ -82,7 +82,7 @@ public class BewareTheGreenOne {
         if (Config.explosionMode == 0) {
             base = 1.5;
         } else {
-            base = 1.3;
+            base = 1.2;
         }
 
         return Math.min(
@@ -257,7 +257,8 @@ public class BewareTheGreenOne {
                         level,
                         event.getExplosion().getPosition(),
                         radius,
-                        multiplier
+                        multiplier,
+                        explosionCount + 1
                 );
 
         explosion.start();

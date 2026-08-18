@@ -17,5 +17,8 @@
   "bewarethegreenone.config.position.top_left": "Top Left",
   "bewarethegreenone.config.position.bottom_right": "Bottom Right",
   "bewarethegreenone.config.position.bottom_left": "Bottom Left",
-  "bewarethegreenone.config.max_multiplier": "Max Explosion Multiplier"
+  "bewarethegreenone.config.max_multiplier": "Max Explosion Multiplier",
+  "bewarethegreenone.config.explosion_mode": "Explosion Mode: %s",
+  "bewarethegreenone.config.explosion_mode.vanilla": "Vanilla",
+  "bewarethegreenone.config.explosion_mode.enchanted": "Enchanted"
 }

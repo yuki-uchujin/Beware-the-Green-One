@@ -55,7 +55,7 @@ public class Config {
                     .comment(
                             "Explosion calculation mode",
                             "0 = Vanilla style (1.5^n)",
-                            "1 = Enchanted style (1.3^n)"
+                            "1 = Enchanted style (1.2^n)"
                     )
                     .defineInRange(
                             "explosionMode",

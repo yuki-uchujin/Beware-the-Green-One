@@ -13,14 +13,18 @@ public class BewareTheGreenOneConfigScreen extends Screen {
 
     private Button positionButton;
     private Button visibilityButton;
+    private Button explosionModeButton;
     private EditBox maxMultiplierBox;
 
     public BewareTheGreenOneConfigScreen(Screen parent) {
+
         super(Component.translatable(
                 "bewarethegreenone.config.title"
         ));
+
         this.parent = parent;
     }
+
 
     @Override
     protected void init() {
@@ -29,10 +33,14 @@ public class BewareTheGreenOneConfigScreen extends Screen {
         // レイアウト位置
         // =========================
 
-        int leftColumnX = this.width / 2 - 105;
-        int rightColumnX = this.width / 2 + 35;
+        int leftColumnX =
+                this.width / 2 - 105;
 
-        int topY = this.height / 2 - 40;
+        int rightColumnX =
+                this.width / 2 + 35;
+
+        int topY =
+                this.height / 2 - 60;
 
 
         // =========================
@@ -43,7 +51,9 @@ public class BewareTheGreenOneConfigScreen extends Screen {
                 getVisibilityText(),
                 button -> {
 
-                    Config.setHudVisible(!Config.hudVisible);
+                    Config.setHudVisible(
+                            !Config.hudVisible
+                    );
 
                     button.setMessage(
                             getVisibilityText()
@@ -56,14 +66,9 @@ public class BewareTheGreenOneConfigScreen extends Screen {
                 20
         ).build();
 
-        this.addRenderableWidget(visibilityButton);
-
-
-        // =========================
-        // 最大倍率ラベル
-        // =========================
-
-        // ラベルはrender()で描画
+        this.addRenderableWidget(
+                visibilityButton
+        );
 
 
         // =========================
@@ -82,15 +87,20 @@ public class BewareTheGreenOneConfigScreen extends Screen {
         );
 
         maxMultiplierBox.setValue(
-                String.valueOf(Config.maxExplosionMultiplier)
+                String.valueOf(
+                        Config.maxExplosionMultiplier
+                )
         );
 
-        // 数値入力だけ許可
         maxMultiplierBox.setFilter(
-                text -> text.matches("\\d*(\\.\\d*)?")
+                text -> text.matches(
+                        "\\d*(\\.\\d*)?"
+                )
         );
 
-        this.addRenderableWidget(maxMultiplierBox);
+        this.addRenderableWidget(
+                maxMultiplierBox
+        );
 
 
         // =========================
@@ -117,7 +127,38 @@ public class BewareTheGreenOneConfigScreen extends Screen {
                 20
         ).build();
 
-        this.addRenderableWidget(positionButton);
+        this.addRenderableWidget(
+                positionButton
+        );
+
+
+        // =========================
+        // 爆発モード
+        // =========================
+
+        explosionModeButton = Button.builder(
+                getExplosionModeText(),
+                button -> {
+
+                    int next =
+                            (Config.explosionMode + 1) % 2;
+
+                    Config.setExplosionMode(next);
+
+                    button.setMessage(
+                            getExplosionModeText()
+                    );
+                }
+        ).bounds(
+                leftColumnX,
+                topY + 60,
+                100,
+                20
+        ).build();
+
+        this.addRenderableWidget(
+                explosionModeButton
+        );
 
 
         // =========================
@@ -133,11 +174,13 @@ public class BewareTheGreenOneConfigScreen extends Screen {
 
                             saveMaxMultiplier();
 
-                            this.minecraft.setScreen(parent);
+                            this.minecraft.setScreen(
+                                    parent
+                            );
                         }
                 ).bounds(
                         this.width / 2 - 50,
-                        topY + 70,
+                        topY + 100,
                         100,
                         20
                 ).build()
@@ -161,7 +204,9 @@ public class BewareTheGreenOneConfigScreen extends Screen {
 
             if (value >= 1.0) {
 
-                Config.setMaxExplosionMultiplier(value);
+                Config.setMaxExplosionMultiplier(
+                        value
+                );
             }
 
         } catch (NumberFormatException ignored) {
@@ -227,6 +272,23 @@ public class BewareTheGreenOneConfigScreen extends Screen {
 
 
     // =========================
+    // 爆発モード
+    // =========================
+
+    private Component getExplosionModeText() {
+
+        return Component.translatable(
+                "bewarethegreenone.config.explosion_mode",
+                Component.translatable(
+                        Config.explosionMode == 0
+                                ? "bewarethegreenone.config.explosion_mode.vanilla"
+                                : "bewarethegreenone.config.explosion_mode.enchanted"
+                )
+        );
+    }
+
+
+    // =========================
     // Render
     // =========================
 
@@ -240,10 +302,12 @@ public class BewareTheGreenOneConfigScreen extends Screen {
 
         this.renderBackground(guiGraphics);
 
-        int leftColumnX = this.width / 2 - 105;
-        int rightColumnX = this.width / 2 + 35;
+        int rightColumnX =
+                this.width / 2 + 35;
 
-        int topY = this.height / 2 - 40;
+        int topY =
+                this.height / 2 - 60;
+
 
         // タイトル
         guiGraphics.drawCenteredString(
@@ -254,6 +318,7 @@ public class BewareTheGreenOneConfigScreen extends Screen {
                 0xFFFFFF
         );
 
+
         // 最大倍率ラベル
         Component maxMultiplierLabel =
                 Component.translatable(
@@ -261,7 +326,9 @@ public class BewareTheGreenOneConfigScreen extends Screen {
                 );
 
         int labelWidth =
-                this.font.width(maxMultiplierLabel);
+                this.font.width(
+                        maxMultiplierLabel
+                );
 
         int labelX =
                 rightColumnX
@@ -278,6 +345,7 @@ public class BewareTheGreenOneConfigScreen extends Screen {
                 labelY,
                 0xFFFFFF
         );
+
 
         super.render(
                 guiGraphics,
