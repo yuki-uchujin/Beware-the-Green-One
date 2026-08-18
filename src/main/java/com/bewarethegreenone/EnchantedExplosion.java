@@ -1,6 +1,7 @@
 package com.bewarethegreenone;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
@@ -25,10 +26,7 @@ public class EnchantedExplosion {
     private final Vec3 center;
     private final double radius;
 
-    // 現在の爆発倍率
     private final double multiplier;
-
-    // 今回が何回目の爆発か
     private final int explosionCount;
 
     private final Queue<BlockPos> queue;
@@ -40,7 +38,16 @@ public class EnchantedExplosion {
     private int ticksElapsed = 0;
     private boolean finishLogged = false;
 
-    private int destroyedCount = 0;
+    /*
+     * =========================
+     * 計測用カウンタ
+     * =========================
+     */
+
+    private long processedCount = 0;
+    private long queuedCount = 0;
+    private long solidCount = 0;
+    private long destroyedCount = 0;
 
     private static final Logger LOGGER =
             LogUtils.getLogger();
@@ -66,29 +73,21 @@ public class EnchantedExplosion {
 
     public void start() {
 
-        System.out.println(
-                "EnchantedExplosion: radius=" + radius
-                        + ", multiplier=" + multiplier
-                        + ", count=" + explosionCount
+        LOGGER.info(
+                "EnchantedExplosion: radius={}, multiplier={}, count={}",
+                radius,
+                multiplier,
+                explosionCount
         );
 
-        /*
-         * =========================
-         * エンティティへの爆発効果
-         * =========================
-         */
         applyEntityEffects();
-
-
-        /*
-         * =========================
-         * ブロック探索開始
-         * =========================
-         */
 
         BlockPos centerPos =
                 BlockPos.containing(center);
 
+        /*
+         * 中心付近から探索開始
+         */
         addToQueue(centerPos.above());
         addToQueue(centerPos.below());
         addToQueue(centerPos.north());
@@ -126,7 +125,6 @@ public class EnchantedExplosion {
                                 return false;
                             }
 
-                            // アイテム・経験値などは除外
                             if (entity instanceof ItemEntity) {
                                 return false;
                             }
@@ -161,43 +159,18 @@ public class EnchantedExplosion {
                                     dz * dz
                     );
 
-            /*
-             * 爆発範囲外
-             */
             if (distance > radius) {
                 continue;
             }
 
-
-            /*
-             * =========================
-             * 距離による爆発力
-             * =========================
-             *
-             * 中心 → 1.0
-             * 外周 → 0.0
-             */
             double distanceRatio =
                     1.0 -
-                            (distance / radius);
+                            distance / radius;
 
-            /*
-             * 急激すぎないように少しカーブさせる
-             */
             double impact =
-                    distanceRatio * distanceRatio;
+                    distanceRatio *
+                            distanceRatio;
 
-
-            /*
-             * =========================
-             * ダメージ
-             * =========================
-             *
-             * 1.0xのクリーパーを
-             * 基準ダメージとして扱う。
-             *
-             * 倍率が上がるほど強くなる。
-             */
             double effectiveMultiplier =
                     Math.pow(multiplier, 0.8);
 
@@ -211,19 +184,10 @@ public class EnchantedExplosion {
             if (damage > 0.0F) {
 
                 entity.hurt(
-                        level.damageSources().explosion(
-                                null
-                        ),
+                        level.damageSources().explosion(null),
                         damage
                 );
             }
-
-
-            /*
-             * =========================
-             * ノックバック
-             * =========================
-             */
 
             double length =
                     Math.sqrt(
@@ -231,10 +195,6 @@ public class EnchantedExplosion {
                                     dz * dz
                     );
 
-            /*
-             * 爆発中心と完全に重なっている
-             * 場合のゼロ除算を防ぐ
-             */
             if (length < 0.001) {
 
                 dx = 0.01;
@@ -247,15 +207,10 @@ public class EnchantedExplosion {
                         );
             }
 
-
-            /*
-             * 水平方向のノックバック
-             */
             double knockback =
                     1.2 *
                             effectiveMultiplier *
                             impact;
-
 
             double knockbackX =
                     dx / length *
@@ -265,15 +220,10 @@ public class EnchantedExplosion {
                     dz / length *
                             knockback;
 
-
-            /*
-             * 少し上方向にも飛ばす
-             */
             double knockbackY =
                     0.35 *
                             knockback *
                             impact;
-
 
             entity.push(
                     knockbackX,
@@ -282,18 +232,15 @@ public class EnchantedExplosion {
             );
 
             entity.hurtMarked = true;
-
-
-            LOGGER.debug(
-                    "Explosion hit {}: distance={}, damage={}, knockback={}",
-                    entity.getName().getString(),
-                    distance,
-                    damage,
-                    knockback
-            );
         }
     }
 
+
+    /*
+     * =========================
+     * キュー追加
+     * =========================
+     */
 
     private void addToQueue(BlockPos pos) {
 
@@ -321,11 +268,18 @@ public class EnchantedExplosion {
             return;
         }
 
-        // 空気でも探索する
         visited.add(pos);
         queue.add(pos);
+
+        queuedCount++;
     }
 
+
+    /*
+     * =========================
+     * Tick処理
+     * =========================
+     */
 
     public void tick() {
 
@@ -333,7 +287,14 @@ public class EnchantedExplosion {
 
         int processed = 0;
 
-        while (processed < 256 && !queue.isEmpty()) {
+        long startTime =
+                System.nanoTime();
+
+        final long MAX_TIME_NANOS =
+                8_000_000L;
+
+
+        while (!queue.isEmpty()) {
 
             BlockPos pos =
                     queue.poll();
@@ -341,51 +302,95 @@ public class EnchantedExplosion {
             processBlock(pos);
 
             processed++;
+
+            if ((processed & 63) == 0) {
+
+                long elapsed =
+                        System.nanoTime() - startTime;
+
+                if (elapsed >= MAX_TIME_NANOS) {
+                    break;
+                }
+            }
         }
 
-        System.out.println(
-                "EnchantedExplosion tick: processed="
-                        + processed
-                        + ", remaining="
-                        + queue.size()
-        );
 
-        if (queue.isEmpty() && !finishLogged) {
+        /*
+         * デバッグ
+         */
+
+        if (explosionCount >= 10) {
+
+            LOGGER.debug(
+                    "EnchantedExplosion tick: count={}, processed={}, remaining={}, visited={}, totalProcessed={}, queued={}, solid={}, destroyed={}",
+                    explosionCount,
+                    processed,
+                    queue.size(),
+                    visited.size(),
+                    processedCount,
+                    queuedCount,
+                    solidCount,
+                    destroyedCount
+            );
+        }
+
+
+        /*
+         * =========================
+         * 完了
+         * =========================
+         */
+
+        if (queue.isEmpty() &&
+                !finishLogged) {
 
             finishLogged = true;
 
             LOGGER.info(
-                    "Enchanted explosion finished: count={}, visited={}, destroyed={}, ticks={}, processed this tick={}",
+                    "Enchanted explosion finished: count={}, visited={}, processed={}, queued={}, solid={}, destroyed={}, ticks={}",
                     explosionCount,
                     visited.size(),
+                    processedCount,
+                    queuedCount,
+                    solidCount,
                     destroyedCount,
-                    ticksElapsed,
-                    processed
+                    ticksElapsed
             );
         }
     }
 
 
+    /*
+     * =========================
+     * ブロック処理
+     * =========================
+     */
+
     private void processBlock(BlockPos pos) {
+
+        processedCount++;
 
         BlockState state =
                 level.getBlockState(pos);
 
         /*
-         * 空気はそのまま通過
+         * RAY方式ではqueueに入るのは
+         * 基本的に最初のsolidなので、
+         * 空気処理はここでは行わない。
          */
+
         if (state.isAir()) {
-
-            addToQueue(pos.above());
-            addToQueue(pos.below());
-            addToQueue(pos.north());
-            addToQueue(pos.south());
-            addToQueue(pos.east());
-            addToQueue(pos.west());
-
             return;
         }
 
+        solidCount++;
+
+
+        /*
+         * =========================
+         * 爆発耐性
+         * =========================
+         */
 
         float resistance =
                 state.getExplosionResistance(
@@ -397,20 +402,8 @@ public class EnchantedExplosion {
         final float UNBREAKABLE_RESISTANCE =
                 3_600_000.0F;
 
-
-        /*
-         * 岩盤などは絶対に破壊しない
-         */
         if (resistance >=
                 UNBREAKABLE_RESISTANCE) {
-
-            LOGGER.info(
-                    "Explosion blocked by {} at {}",
-                    state.getBlock()
-                            .getName()
-                            .getString(),
-                    pos
-            );
 
             return;
         }
@@ -418,7 +411,7 @@ public class EnchantedExplosion {
 
         /*
          * =========================
-         * ブロック破壊確率
+         * 破壊確率
          * =========================
          */
 
@@ -430,15 +423,12 @@ public class EnchantedExplosion {
                 multiplier /
                         requiredPower;
 
-
         double adjustedPowerRatio =
                 powerRatio * 1.15;
-
 
         double powerSquared =
                 adjustedPowerRatio *
                         adjustedPowerRatio;
-
 
         double destructionChance =
                 powerSquared /
@@ -446,8 +436,9 @@ public class EnchantedExplosion {
 
 
         /*
-         * 爆発回数による追加補正
+         * 爆発回数による補正
          */
+
         double countBonus =
                 Math.min(
                         0.15,
@@ -464,13 +455,14 @@ public class EnchantedExplosion {
 
         /*
          * =========================
-         * ブロック破壊
+         * 破壊
          * =========================
          */
 
         boolean destroyed = false;
 
-        if (random.nextDouble() < destructionChance) {
+        if (random.nextDouble() <
+                destructionChance) {
 
             level.destroyBlock(
                     pos,
@@ -484,35 +476,122 @@ public class EnchantedExplosion {
 
         /*
          * =========================
-         * 爆発の浸透率
+         * 浸透
          * =========================
          */
 
         double penetrationChance =
                 1.0 -
                         Math.exp(
-                                -explosionCount /
-                                        3.5
+                                -explosionCount / 3.5
                         );
 
-
-        /*
-         * =========================
-         * 次のブロックへ
-         * =========================
-         */
 
         if (destroyed ||
                 random.nextDouble() <
                         penetrationChance) {
 
-            addToQueue(pos.above());
-            addToQueue(pos.below());
-            addToQueue(pos.north());
-            addToQueue(pos.south());
-            addToQueue(pos.east());
-            addToQueue(pos.west());
+            addNeighbours(pos);
         }
+    }
+
+
+    /*
+     * =========================
+     * RAY方式
+     * =========================
+     */
+
+    private void spreadRay(BlockPos pos) {
+
+        castRay(pos, Direction.UP);
+        castRay(pos, Direction.DOWN);
+        castRay(pos, Direction.NORTH);
+        castRay(pos, Direction.SOUTH);
+        castRay(pos, Direction.EAST);
+        castRay(pos, Direction.WEST);
+    }
+
+
+    private void castRay(
+            BlockPos start,
+            Direction direction
+    ) {
+
+        BlockPos.MutableBlockPos current =
+                start.mutable();
+
+        current.move(direction);
+
+        while (true) {
+
+            /*
+             * 爆発範囲外なら終了
+             */
+
+            double dx =
+                    current.getX() + 0.5 - center.x;
+
+            double dy =
+                    current.getY() + 0.5 - center.y;
+
+            double dz =
+                    current.getZ() + 0.5 - center.z;
+
+            double distanceSquared =
+                    dx * dx +
+                            dy * dy +
+                            dz * dz;
+
+            if (distanceSquared >
+                    radius * radius) {
+
+                return;
+            }
+
+
+            BlockState state =
+                    level.getBlockState(current);
+
+
+            /*
+             * 空気ならさらに進む
+             */
+
+            if (state.isAir()) {
+
+                current.move(direction);
+                continue;
+            }
+
+
+            /*
+             * 最初のsolidを発見
+             */
+
+            addToQueue(
+                    current.immutable()
+            );
+
+            return;
+        }
+    }
+
+
+    /*
+     * =========================
+     * 周囲6ブロック
+     * =========================
+     */
+
+    private void addNeighbours(BlockPos pos) {
+
+        addToQueue(pos.above());
+        addToQueue(pos.below());
+        addToQueue(pos.north());
+        addToQueue(pos.south());
+        addToQueue(pos.east());
+        addToQueue(pos.west());
     }
 
 

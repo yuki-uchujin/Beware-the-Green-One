@@ -48,7 +48,26 @@ public class BewareTheGreenOne {
     private static final boolean DEBUG_BENCHMARK = true;
 
 
+    /*
+     * ========================================
+     * EnchantedExplosion 管理
+     * ========================================
+     *
+     * activeExplosions:
+     * 現在 tick() で処理している爆発。
+     *
+     * pendingExplosions:
+     * ExplosionEvent.Start などから新しく
+     * 登録された爆発。
+     *
+     * tick() 中に新しい爆発が登録されても
+     * activeExplosions 自体を変更しないことで
+     * ConcurrentModificationException を防ぐ。
+     */
     private static final List<EnchantedExplosion> activeExplosions =
+            new ArrayList<>();
+
+    private static final List<EnchantedExplosion> pendingExplosions =
             new ArrayList<>();
 
 
@@ -276,7 +295,11 @@ public class BewareTheGreenOne {
 
             explosion.start();
 
-            activeExplosions.add(explosion);
+            /*
+             * activeExplosions ではなく
+             * pendingExplosions に追加する。
+             */
+            pendingExplosions.add(explosion);
 
             return;
         }
@@ -386,7 +409,11 @@ public class BewareTheGreenOne {
 
         explosion.start();
 
-        activeExplosions.add(explosion);
+        /*
+         * activeExplosions ではなく
+         * pendingExplosions に追加する。
+         */
+        pendingExplosions.add(explosion);
     }
 
 
@@ -402,6 +429,38 @@ public class BewareTheGreenOne {
             return;
         }
 
+
+        /*
+         * ========================================
+         * Pending → Active
+         * ========================================
+         *
+         * 前のtickやExplosionEvent.Startで
+         * 登録された爆発を、今回の処理対象へ移す。
+         *
+         * ここでは activeExplosions の処理前なので
+         * removeIf() 中の変更問題は発生しない。
+         */
+        if (!pendingExplosions.isEmpty()) {
+
+            activeExplosions.addAll(
+                    pendingExplosions
+            );
+
+            pendingExplosions.clear();
+        }
+
+
+        /*
+         * ========================================
+         * Active explosions を処理
+         * ========================================
+         *
+         * explosion.tick() の中で新しい
+         * EnchantedExplosion が作られたとしても、
+         * それは pendingExplosions に入るため、
+         * activeExplosions は変更されない。
+         */
         activeExplosions.removeIf(explosion -> {
 
             explosion.tick();
