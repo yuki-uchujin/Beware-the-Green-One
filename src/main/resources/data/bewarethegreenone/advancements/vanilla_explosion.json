@@ -5,10 +5,10 @@
       "item": "minecraft:creeper_head"
     },
     "title": {
-      "text": "本当にあのクリーパー...？"
+      "translate": "advancement.bewarethegreenone.vanilla_explosion.title"
     },
     "description": {
-      "text": "「爆発モード：バニラ」を初めて使用する"
+      "translate": "advancement.bewarethegreenone.vanilla_explosion.description"
     },
     "frame": "task"
   },

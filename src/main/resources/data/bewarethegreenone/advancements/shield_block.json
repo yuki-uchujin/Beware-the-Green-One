@@ -1,0 +1,27 @@
+{
+  "parent": "bewarethegreenone:root",
+  "display": {
+    "icon": {
+      "item": "minecraft:shield"
+    },
+    "title": {
+      "translate": "advancement.bewarethegreenone.shield_block.title"
+    },
+    "description": {
+      "translate": "advancement.bewarethegreenone.shield_block.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "shield_block": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "shield_block"
+    ]
+  ]
+}

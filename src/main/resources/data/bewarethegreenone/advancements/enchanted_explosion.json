@@ -2,13 +2,13 @@
   "parent": "bewarethegreenone:root",
   "display": {
     "icon": {
-      "item": "minecraft:tnt"
+      "item": "minecraft:gunpowder"
     },
     "title": {
-      "text": "拡張爆発"
+      "translate": "advancement.bewarethegreenone.enchanted_explosion.title"
     },
     "description": {
-      "text": "「爆発モード：拡張」を初めて使用する"
+      "translate": "advancement.bewarethegreenone.enchanted_explosion.description"
     },
     "frame": "task"
   },

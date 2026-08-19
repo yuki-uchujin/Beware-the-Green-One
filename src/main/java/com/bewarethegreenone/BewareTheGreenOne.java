@@ -10,6 +10,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.ExplosionEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -124,6 +125,36 @@ public class BewareTheGreenOne {
 
 
         return null;
+    }
+
+    private boolean hasAdvancement(
+            ServerPlayer player,
+            String advancementId
+    ) {
+
+        MinecraftServer server =
+                player.getServer();
+
+        if (server == null) {
+            return false;
+        }
+
+        var advancement =
+                server.getAdvancements()
+                        .getAdvancement(
+                                ResourceLocation.fromNamespaceAndPath(
+                                        MODID,
+                                        advancementId
+                                )
+                        );
+
+        if (advancement == null) {
+            return false;
+        }
+
+        return player.getAdvancements()
+                .getOrStartProgress(advancement)
+                .isDone();
     }
 
     public static void grantAdvancement(
@@ -590,11 +621,46 @@ public class BewareTheGreenOne {
             double multiplier
     ) {
 
-        if (multiplier >= Config.maxExplosionMultiplier) {
+        if (multiplier >= Config.maxExplosionMultiplier
+                && !hasAdvancement(player, "breakthrough")) {
 
             grantAdvancement(
                     player,
                     "breakthrough"
+            );
+
+            player.level().playSound(
+                    null,
+                    player.blockPosition(),
+                    SoundEvents.UI_TOAST_CHALLENGE_COMPLETE,
+                    SoundSource.MASTER,
+                    1.0F,
+                    1.0F
+            );
+        }
+    }
+
+    @SubscribeEvent
+    public void onPlayerBlockExplosion(
+            LivingAttackEvent event
+    ) {
+
+        if (!(event.getEntity() instanceof ServerPlayer player)) {
+            return;
+        }
+
+
+        if (!(event.getSource()
+                .getDirectEntity() instanceof Creeper)) {
+            return;
+        }
+
+
+        if (player.isBlocking()) {
+
+            grantAdvancement(
+                    player,
+                    "shield_block"
             );
 
         }
@@ -767,7 +833,8 @@ public class BewareTheGreenOne {
 
 
 
-        if (destroyedBlocks >= LARGE_EXPLOSION_BLOCKS) {
+        if (destroyedBlocks >= LARGE_EXPLOSION_BLOCKS
+                && !hasAdvancement(explosionPlayer, "large_explosion")) {
 
             grantAdvancement(
                     explosionPlayer,

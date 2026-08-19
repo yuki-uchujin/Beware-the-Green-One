@@ -5,10 +5,10 @@
       "item": "minecraft:tnt"
     },
     "title": {
-      "text": "大規模爆発"
+      "translate": "advancement.bewarethegreenone.large_explosion.title"
     },
     "description": {
-      "text": "一度の爆発で大量のブロックを破壊する"
+      "translate": "advancement.bewarethegreenone.large_explosion.description"
     },
     "frame": "goal"
   },

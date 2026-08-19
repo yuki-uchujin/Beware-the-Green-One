@@ -11,7 +11,6 @@
   "bewarethegreenone.config.hud": "HUD: %s",
   "bewarethegreenone.config.on": "オン",
   "bewarethegreenone.config.off": "オフ",
-
   "bewarethegreenone.config.position": "HUD位置: %s",
   "bewarethegreenone.config.position.top_right": "右上",
   "bewarethegreenone.config.position.top_left": "左上",
@@ -20,5 +19,21 @@
   "bewarethegreenone.config.max_multiplier": "最大爆発倍率",
   "bewarethegreenone.config.explosion_mode": "爆発モード: %s",
   "bewarethegreenone.config.explosion_mode.vanilla": "バニラ",
-  "bewarethegreenone.config.explosion_mode.enchanted": "拡張"
+  "bewarethegreenone.config.explosion_mode.enchanted": "拡張",
+
+  "advancement.bewarethegreenone.root.title": "Beware The Green One",
+  "advancement.bewarethegreenone.root.description": "クリーパーの力に立ち向かえ",
+  "advancement.bewarethegreenone.first_explosion.title": "最初の爆発",
+  "advancement.bewarethegreenone.first_explosion.description": "緑の奴には気を付けた方がいいらしい",
+  "advancement.bewarethegreenone.vanilla_explosion.title": "本当にあのクリーパー...？",
+  "advancement.bewarethegreenone.vanilla_explosion.description": "「爆発モード：バニラ」を初めて使用する",
+  "advancement.bewarethegreenone.enchanted_explosion.title": "拡張爆発",
+  "advancement.bewarethegreenone.enchanted_explosion.description": "「爆発モード：拡張」を初めて使用する",
+  "advancement.bewarethegreenone.large_explosion.title": "大規模爆発",
+  "advancement.bewarethegreenone.large_explosion.description": "一度の爆発で大量のブロックを破壊する",
+  "advancement.bewarethegreenone.breakthrough.title": "限界突破",
+  "advancement.bewarethegreenone.breakthrough.description": "設定された最大爆発倍率に到達した",
+  "advancement.bewarethegreenone.shield_block.title": "今日はやられません",
+  "advancement.bewarethegreenone.shield_block.description": "爆発に立ち向かい、盾で防御する"
+
 }

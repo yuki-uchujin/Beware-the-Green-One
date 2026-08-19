@@ -11,7 +11,6 @@
   "bewarethegreenone.config.hud": "HUD: %s",
   "bewarethegreenone.config.on": "ON",
   "bewarethegreenone.config.off": "OFF",
-
   "bewarethegreenone.config.position": "HUD Position: %s",
   "bewarethegreenone.config.position.top_right": "Top Right",
   "bewarethegreenone.config.position.top_left": "Top Left",
@@ -20,5 +19,20 @@
   "bewarethegreenone.config.max_multiplier": "Max Explosion Multiplier",
   "bewarethegreenone.config.explosion_mode": "Explosion Mode: %s",
   "bewarethegreenone.config.explosion_mode.vanilla": "Vanilla",
-  "bewarethegreenone.config.explosion_mode.enchanted": "Enchanted"
+  "bewarethegreenone.config.explosion_mode.enchanted": "Enchanted",
+
+  "advancement.bewarethegreenone.root.title": "Beware The Green One",
+  "advancement.bewarethegreenone.root.description": "Stand against the power of the Creeper",
+  "advancement.bewarethegreenone.first_explosion.title": "First Explosion",
+  "advancement.bewarethegreenone.first_explosion.description": "Apparently, you should be careful with the green guy",
+  "advancement.bewarethegreenone.vanilla_explosion.title": "Is That Really a Creeper...?",
+  "advancement.bewarethegreenone.vanilla_explosion.description": "Use \"Explosion Mode: Vanilla\" for the first time",
+  "advancement.bewarethegreenone.enchanted_explosion.title": "Enchanted Explosion",
+  "advancement.bewarethegreenone.enchanted_explosion.description": "Use \"Explosion Mode: Enchanted\" for the first time",
+  "advancement.bewarethegreenone.large_explosion.title": "Massive Explosion",
+  "advancement.bewarethegreenone.large_explosion.description": "Destroy a huge number of blocks with a single explosion",
+  "advancement.bewarethegreenone.breakthrough.title": "Beyond the Limit",
+  "advancement.bewarethegreenone.breakthrough.description": "Reach the configured maximum explosion multiplier",
+  "advancement.bewarethegreenone.shield_block.title": "Not Today, Green One",
+  "advancement.bewarethegreenone.shield_block.description": "Block a creeper explosion with a shield"
 }

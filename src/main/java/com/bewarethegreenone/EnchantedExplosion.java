@@ -184,6 +184,38 @@ public class EnchantedExplosion {
             double effectiveMultiplier =
                     Math.pow(multiplier, 0.8);
 
+            boolean shieldBlocked = false;
+
+            if (entity instanceof ServerPlayer player) {
+
+                if (player.isBlocking()) {
+
+                    Vec3 direction =
+                            center.subtract(player.position())
+                                    .normalize();
+
+                    double dot =
+                            player.getLookAngle()
+                                    .dot(direction);
+
+                    if (dot > 0.5) {
+
+                        shieldBlocked = true;
+
+                        BewareTheGreenOne.grantAdvancement(
+                                player,
+                                "shield_block"
+                        );
+
+                        LOGGER.info(
+                                "Shield blocked explosion by {}",
+                                player.getGameProfile().getName()
+                        );
+                    }
+                }
+            }
+
+
             float damage =
                     (float) (
                             12.0 *
@@ -191,13 +223,15 @@ public class EnchantedExplosion {
                                     impact
                     );
 
-            if (damage > 0.0F) {
+
+            if (!shieldBlocked && damage > 0.0F) {
 
                 entity.hurt(
                         level.damageSources().explosion(null),
                         damage
                 );
             }
+
 
             double length =
                     Math.sqrt(

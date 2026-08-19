@@ -5,10 +5,10 @@
       "item": "minecraft:creeper_spawn_egg"
     },
     "title": {
-      "text": "最初の爆発"
+      "translate": "advancement.bewarethegreenone.first_explosion.title"
     },
     "description": {
-      "text": "緑の奴には気を付けた方がいいらしい"
+      "translate": "advancement.bewarethegreenone.first_explosion.description"
     },
     "frame": "task",
     "show_toast": true,

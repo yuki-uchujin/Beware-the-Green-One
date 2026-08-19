@@ -4,10 +4,10 @@
       "item": "minecraft:creeper_head"
     },
     "title": {
-      "text": "Beware The Green One"
+      "translate": "advancement.bewarethegreenone.root.title"
     },
     "description": {
-      "text": "クリーパーの力に立ち向かえ"
+      "translate": "advancement.bewarethegreenone.root.description"
     },
     "background": "minecraft:textures/gui/advancements/backgrounds/adventure.png",
     "show_toast": true,
