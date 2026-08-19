@@ -2,6 +2,7 @@ package com.bewarethegreenone;
 
 import com.bewarethegreenone.client.BewareTheGreenOneConfigScreen;
 import com.mojang.logging.LogUtils;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerLevel;
@@ -17,9 +18,10 @@ import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.network.PacketDistributor;
 import org.slf4j.Logger;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @Mod(BewareTheGreenOne.MODID)
 public class BewareTheGreenOne {
@@ -28,6 +30,10 @@ public class BewareTheGreenOne {
 
     private static final Logger LOGGER =
             LogUtils.getLogger();
+
+    private static final int LARGE_EXPLOSION_BLOCKS = 100000;
+    private static final Map<UUID, ServerPlayer> creeperIgniters =
+            new HashMap<>();
 
     public static boolean hasExploded = false;
     public static long analysisStartTime = 0;
@@ -45,7 +51,7 @@ public class BewareTheGreenOne {
      *
      * 通常プレイ時は false にする。
      */
-    private static final boolean DEBUG_BENCHMARK = true;
+    private static final boolean DEBUG_BENCHMARK = false;
 
 
     /*
@@ -94,6 +100,104 @@ public class BewareTheGreenOne {
 
         LOGGER.info("Beware the Green One loaded!");
     }
+
+    private ServerPlayer getExplosionPlayer(
+            Creeper creeper
+    ) {
+
+        ServerPlayer player =
+                creeperIgniters.get(
+                        creeper.getUUID()
+                );
+
+
+        if (player != null) {
+            return player;
+        }
+
+
+        if (creeper.getTarget()
+                instanceof ServerPlayer target) {
+
+            return target;
+        }
+
+
+        return null;
+    }
+
+    public static void grantAdvancement(
+            ServerPlayer player,
+            String advancementId
+    ) {
+
+        MinecraftServer server =
+                player.getServer();
+
+        if (server == null) {
+            return;
+        }
+
+        var advancement =
+                server.getAdvancements().getAdvancement(
+                        ResourceLocation.fromNamespaceAndPath(
+                                MODID,
+                                advancementId
+                        )
+                );
+
+        if (advancement == null) {
+            LOGGER.warn(
+                    "Advancement not found: {}",
+                    advancementId
+            );
+            return;
+        }
+
+        var progress =
+                player.getAdvancements()
+                        .getOrStartProgress(advancement);
+
+        for (String criterion :
+                progress.getRemainingCriteria()) {
+
+            player.getAdvancements()
+                    .award(
+                            advancement,
+                            criterion
+                    );
+        }
+
+
+// 実績解除SE
+        if (advancementId.equals("breakthrough")
+                || advancementId.equals("large_explosion")) {
+
+            // チャレンジ達成音
+            player.level().playSound(
+                    null,
+                    player.blockPosition(),
+                    SoundEvents.UI_TOAST_CHALLENGE_COMPLETE,
+                    SoundSource.MASTER,
+                    1.0F,
+                    1.0F
+            );
+
+        } else {
+
+            // 通常進捗音
+            player.level().playSound(
+                    null,
+                    player.blockPosition(),
+                    SoundEvents.UI_TOAST_IN,
+                    SoundSource.MASTER,
+                    1.0F,
+                    1.0F
+            );
+        }
+    }
+
+
 
 
     /**
@@ -168,6 +272,31 @@ public class BewareTheGreenOne {
         // クリーパー以外は何もしない
         if (!(source instanceof Creeper)) {
             return;
+        }
+
+        Creeper creeper =
+                (Creeper) source;
+
+        ServerPlayer explosionPlayer =
+                getExplosionPlayer(creeper);
+
+        if (explosionPlayer != null) {
+
+            LOGGER.info(
+                    "Creeper explosion target: {}",
+                    explosionPlayer.getGameProfile().getName()
+            );
+
+            grantAdvancement(
+                    explosionPlayer,
+                    "first_explosion"
+            );
+
+        } else {
+
+            LOGGER.info(
+                    "Creeper exploded without a ServerPlayer target"
+            );
         }
 
         MinecraftServer server =
@@ -290,7 +419,8 @@ public class BewareTheGreenOne {
                             event.getExplosion().getPosition(),
                             radius,
                             multiplier,
-                            newExplosionCount
+                            newExplosionCount,
+                            explosionPlayer
                     );
 
             explosion.start();
@@ -317,10 +447,28 @@ public class BewareTheGreenOne {
                     "Vanilla explosion mode"
             );
 
+            if (explosionPlayer != null) {
+
+                grantAdvancement(
+                        explosionPlayer,
+                        "vanilla_explosion"
+                );
+
+            }
+
             double multiplier =
                     getExplosionMultiplier(
                             explosionCount
                     );
+
+            if (explosionPlayer != null) {
+
+                checkMaxMultiplierAdvancement(
+                        explosionPlayer,
+                        multiplier
+                );
+
+            }
 
             LOGGER.info(
                     "Vanilla explosion: count={}, multiplier={}x",
@@ -349,6 +497,15 @@ public class BewareTheGreenOne {
         }
 
 
+        if (explosionPlayer != null) {
+
+            grantAdvancement(
+                    explosionPlayer,
+                    "enchanted_explosion"
+            );
+
+        }
+
         /*
          * ========================================
          * 通常の Enchanted Mode
@@ -359,6 +516,16 @@ public class BewareTheGreenOne {
                 getExplosionMultiplier(
                         explosionCount
                 );
+
+        if (explosionPlayer != null) {
+
+            checkMaxMultiplierAdvancement(
+                    explosionPlayer,
+                    multiplier
+            );
+
+        }
+
 
         LOGGER.info(
                 "Enchanted explosion: count={}, multiplier={}x",
@@ -384,6 +551,7 @@ public class BewareTheGreenOne {
         double radius =
                 3.0 * multiplier;
 
+
         LOGGER.info(
                 "Starting Enchanted explosion! multiplier={}x, radius={}",
                 multiplier,
@@ -404,7 +572,8 @@ public class BewareTheGreenOne {
                         event.getExplosion().getPosition(),
                         radius,
                         multiplier,
-                        explosionCount + 1
+                        explosionCount + 1,
+                        explosionPlayer
                 );
 
         explosion.start();
@@ -416,6 +585,20 @@ public class BewareTheGreenOne {
         pendingExplosions.add(explosion);
     }
 
+    private void checkMaxMultiplierAdvancement(
+            ServerPlayer player,
+            double multiplier
+    ) {
+
+        if (multiplier >= Config.maxExplosionMultiplier) {
+
+            grantAdvancement(
+                    player,
+                    "breakthrough"
+            );
+
+        }
+    }
 
     /**
      * 1tickごとに独自爆発を処理
@@ -505,4 +688,96 @@ public class BewareTheGreenOne {
                 )
         );
     }
+
+    /**
+     * 火打石でクリーパーを起爆したプレイヤーを記録
+     */
+    @SubscribeEvent
+    public void onCreeperIgnite(
+            net.minecraftforge.event.entity.player.PlayerInteractEvent.EntityInteract event
+    ) {
+
+        if (!(event.getTarget() instanceof Creeper creeper)) {
+            return;
+        }
+
+
+        if (!(event.getEntity() instanceof ServerPlayer player)) {
+            return;
+        }
+
+
+        if (event.getItemStack().getItem()
+                == net.minecraft.world.item.Items.FLINT_AND_STEEL) {
+
+
+            creeperIgniters.put(
+                    creeper.getUUID(),
+                    player
+            );
+
+
+            LOGGER.info(
+                    "Creeper {} ignited by {}",
+                    creeper.getUUID(),
+                    player.getGameProfile().getName()
+            );
+        }
+    }
+
+    /**
+     * Vanilla爆発の破壊ブロック数チェック
+     */
+    @SubscribeEvent
+    public void onExplosionDetonate(
+            ExplosionEvent.Detonate event
+    ) {
+
+        Entity source =
+                event.getExplosion()
+                        .getDirectSourceEntity();
+
+        if (!(source instanceof Creeper)) {
+            return;
+        }
+
+
+        Creeper creeper =
+                (Creeper) source;
+
+
+        ServerPlayer explosionPlayer =
+                getExplosionPlayer(creeper);
+
+
+        if (explosionPlayer == null) {
+            return;
+        }
+
+
+        int destroyedBlocks =
+                event.getAffectedBlocks()
+                        .size();
+
+
+        LOGGER.info(
+                "Explosion destroyed blocks: {}",
+                destroyedBlocks
+        );
+
+
+
+        if (destroyedBlocks >= LARGE_EXPLOSION_BLOCKS) {
+
+            grantAdvancement(
+                    explosionPlayer,
+                    "large_explosion"
+            );
+
+            LOGGER.info(
+                    "Large explosion advancement granted!"
+            );
+        }
+    }
 }
+

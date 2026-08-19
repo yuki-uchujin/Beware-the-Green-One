@@ -3,6 +3,7 @@ package com.bewarethegreenone;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -19,10 +20,12 @@ import java.util.Set;
 
 import com.mojang.logging.LogUtils;
 import org.slf4j.Logger;
+import net.minecraft.world.level.block.Blocks;
 
 public class EnchantedExplosion {
 
     private final ServerLevel level;
+    private ServerPlayer owner;
     private final Vec3 center;
     private final double radius;
 
@@ -31,6 +34,11 @@ public class EnchantedExplosion {
 
     private final Queue<BlockPos> queue;
     private final Set<BlockPos> visited;
+
+    private final Set<BlockPos> firePositions =
+            new HashSet<>();
+    private final Set<BlockPos> destroyedPositions =
+            new HashSet<>();
 
     private final RandomSource random =
             RandomSource.create();
@@ -58,13 +66,15 @@ public class EnchantedExplosion {
             Vec3 center,
             double radius,
             double multiplier,
-            int explosionCount
+            int explosionCount,
+            ServerPlayer owner
     ) {
         this.level = level;
         this.center = center;
         this.radius = radius;
         this.multiplier = multiplier;
         this.explosionCount = explosionCount;
+        this.owner = owner;
 
         this.queue = new ArrayDeque<>();
         this.visited = new HashSet<>();
@@ -344,7 +354,26 @@ public class EnchantedExplosion {
         if (queue.isEmpty() &&
                 !finishLogged) {
 
+            igniteCrater();
+
+
+            if (owner != null &&
+                    destroyedCount >= 10000) {
+
+                BewareTheGreenOne.grantAdvancement(
+                        owner,
+                        "large_explosion"
+                );
+
+                LOGGER.info(
+                        "Large enchanted explosion advancement granted! destroyed={}",
+                        destroyedCount
+                );
+            }
+
+
             finishLogged = true;
+
 
             LOGGER.info(
                     "Enchanted explosion finished: count={}, visited={}, processed={}, queued={}, solid={}, destroyed={}, ticks={}",
@@ -461,16 +490,21 @@ public class EnchantedExplosion {
 
         boolean destroyed = false;
 
-        if (random.nextDouble() <
-                destructionChance) {
+        if (random.nextDouble() < destructionChance) {
 
             level.destroyBlock(
                     pos,
                     false
             );
 
+            destroyedPositions.add(pos.immutable());
+
             destroyedCount++;
             destroyed = true;
+
+            if (random.nextDouble() < getFireChance()) {
+                firePositions.add(pos.above());
+            }
         }
 
 
@@ -577,6 +611,102 @@ public class EnchantedExplosion {
         }
     }
 
+    private double getFireChance() {
+
+        if (multiplier < 2.0) {
+            return 0.0;
+        }
+
+        if (multiplier < 3.0) {
+            return 0.05 +
+                    (multiplier - 2.0) * 0.20;
+        }
+
+        if (multiplier < 4.0) {
+            return 0.25 +
+                    (multiplier - 3.0) * 0.35;
+        }
+
+        if (multiplier < 5.0) {
+            return 0.60 +
+                    (multiplier - 4.0) * 0.35;
+        }
+
+        return 1.0;
+    }
+
+    private void igniteCrater() {
+
+        double fireChance =
+                getFireChance();
+
+        if (fireChance <= 0.0) {
+            return;
+        }
+
+        Set<BlockPos> firePositions =
+                new HashSet<>();
+
+        for (BlockPos destroyedPos :
+                destroyedPositions) {
+
+            /*
+             * 破壊された場所の周囲を見る。
+             */
+            for (Direction direction :
+                    Direction.values()) {
+
+                BlockPos surfacePos =
+                        destroyedPos.relative(direction);
+
+                /*
+                 * そこが空気でなければ
+                 * 火は置けない。
+                 */
+                if (!level.getBlockState(surfacePos).isAir()) {
+                    continue;
+                }
+
+                /*
+                 * 空気の下に足場があるか確認。
+                 */
+                BlockPos below =
+                        surfacePos.below();
+
+                BlockState belowState =
+                        level.getBlockState(below);
+
+                if (belowState.isAir()) {
+                    continue;
+                }
+
+                /*
+                 * 同じ場所を何度も登録しない。
+                 */
+                firePositions.add(surfacePos);
+            }
+        }
+
+        /*
+         * 倍率に応じて着火。
+         */
+        for (BlockPos pos :
+                firePositions) {
+
+            if (random.nextDouble() <
+                    fireChance) {
+
+                if (level.getBlockState(pos).isAir()) {
+
+                    level.setBlock(
+                            pos,
+                            Blocks.FIRE.defaultBlockState(),
+                            3
+                    );
+                }
+            }
+        }
+    }
 
     /*
      * =========================

@@ -1,0 +1,25 @@
+{
+  "parent": "bewarethegreenone:root",
+  "display": {
+    "icon": {
+      "item": "minecraft:nether_star"
+    },
+    "title": {
+      "text": "限界突破"
+    },
+    "description": {
+      "text": "設定された最大爆発倍率に到達した"
+    },
+    "frame": "goal"
+  },
+  "criteria": {
+    "enchanted_explosion": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "enchanted_explosion"
+    ]
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "parent": "bewarethegreenone:root",
+  "display": {
+    "icon": {
+      "item": "minecraft:tnt"
+    },
+    "title": {
+      "text": "拡張爆発"
+    },
+    "description": {
+      "text": "「爆発モード：拡張」を初めて使用する"
+    },
+    "frame": "task"
+  },
+  "criteria": {
+    "enchanted_explosion": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "enchanted_explosion"
+    ]
+  ]
+}

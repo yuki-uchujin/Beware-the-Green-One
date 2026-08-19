@@ -1,0 +1,23 @@
+{
+  "parent": "bewarethegreenone:root",
+  "display": {
+    "icon": {
+      "item": "minecraft:creeper_spawn_egg"
+    },
+    "title": {
+      "text": "最初の爆発"
+    },
+    "description": {
+      "text": "緑の奴には気を付けた方がいいらしい"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "first_explosion": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}
